@@ -90,6 +90,36 @@ class MemberController extends Controller
         ]);
     }
 
+    // DELETE /api/v1/members/{id} — admin & staff, hapus user member + kartu member-nya
+    public function destroy($id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->role !== 'member') {
+            return response()->json([
+                'message' => 'Cuma user dengan role member yang bisa dihapus.',
+            ], 422);
+        }
+
+        if ($user->member) {
+            $hasActiveLoan = Loan::where('member_id', $user->member->id)
+                ->whereNull('returned_at')
+                ->exists();
+
+            if ($hasActiveLoan) {
+                return response()->json([
+                    'message' => 'Member masih punya pinjaman aktif, tidak bisa dihapus.',
+                ], 422);
+            }
+        }
+
+        $user->delete();
+
+        return response()->json([
+            'message' => 'Member berhasil dihapus.',
+        ]);
+    }
+
     private function generateMemberCode(): string
     {
         do {

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\Loan;
 use Illuminate\Http\Request;
 
 class BookController extends Controller
@@ -63,5 +64,54 @@ class BookController extends Controller
             'message' => 'Buku berhasil ditambahkan',
             'book' => $book->load('category'),
         ], 201);
+    }
+
+    // PUT /api/v1/books/{id} — admin & staff
+    public function update(Request $request, $id)
+    {
+        $book = Book::findOrFail($id);
+
+        $data = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'isbn' => 'required|string|unique:books,isbn,' . $id,
+            'title' => 'required|string',
+            'author' => 'required|string',
+            'publisher' => 'required|string',
+            'publication_year' => 'required|integer|min:1900|max:' . date('Y'),
+            'total_copies' => 'required|integer|min:1',
+        ]);
+
+        // sinkron stok: selisih total_copies ditambahkan/dikurangi dari available_copies
+        $delta = $data['total_copies'] - $book->total_copies;
+        $data['available_copies'] = max(0, $book->available_copies + $delta);
+
+        $book->update($data);
+
+        return response()->json([
+            'message' => 'Buku berhasil diperbarui.',
+            'book' => $book->load('category'),
+        ]);
+    }
+
+    // DELETE /api/v1/books/{id} — admin & staff
+    public function destroy($id)
+    {
+        $book = Book::findOrFail($id);
+
+        $hasActiveLoan = Loan::where('book_id', $book->id)
+            ->whereNull('returned_at')
+            ->exists();
+
+        if ($hasActiveLoan) {
+            return response()->json([
+                'message' => 'Buku masih dipinjam, tidak bisa dihapus.',
+            ], 422);
+        }
+
+        $book->delete();
+
+        return response()->json([
+            'message' => 'Buku berhasil dihapus.',
+        ]);
     }
 }
