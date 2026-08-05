@@ -11,8 +11,8 @@ use App\Http\Controllers\ReportController;
 Route::prefix('v1')->group(function () {
 
     // buat publik gapake token
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::get('/books', [BookController::class, 'index']);
 
     // harus login dulu baru bisa akses route ini
