@@ -28,6 +28,19 @@ class BookController extends Controller
         return response()->json($books);
     }
 
+    public function show($id)
+    {
+        $book = Book::with('category')->find($id);
+
+        if (!$book) {
+            return response()->json([
+                'message' => 'Buku tidak ditemukan',
+            ], 404);
+        }
+
+        return response()->json($book);
+    }
+
     // POST /api/v1/books — admin & staff
     public function store(Request $request)
     {
