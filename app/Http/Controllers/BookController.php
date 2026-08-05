@@ -38,7 +38,7 @@ class BookController extends Controller
     public function authors()
     {
         $authors = Book::select('author')
-            ->distinct()
+            ->distinct()    
             ->orderBy('author')
             ->pluck('author');
 
