@@ -11,14 +11,19 @@ class BookController extends Controller
     // GET /api/v1/books — publik, search + filter + pagination
     public function index(Request $request)
     {
+        $search = $request->search ?? $request->q;
+
         $books = Book::query()
             ->with('category')
-            ->when($request->q, function ($query) use ($request) {
-                $query->where(function ($query) use ($request) {
-                    $query->where('title', 'ilike', '%' . $request->q . '%')
-                        ->orWhere('author', 'ilike', '%' . $request->q . '%')
-                        ->orWhere('isbn', 'ilike', '%' . $request->q . '%');
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('title', 'ilike', '%' . $search . '%')
+                        ->orWhere('author', 'ilike', '%' . $search . '%')
+                        ->orWhere('isbn', 'ilike', '%' . $search . '%');
                 });
+            })
+            ->when($request->author, function ($query) use ($request) {
+                $query->where('author', 'ilike', '%' . $request->author . '%');
             })
             ->when($request->category_id, function ($query) use ($request) {
                 $query->where('category_id', $request->category_id);
@@ -27,6 +32,17 @@ class BookController extends Controller
             ->paginate(12);
 
         return response()->json($books);
+    }
+
+    // GET /api/v1/authors — publik, daftar penulis unik
+    public function authors()
+    {
+        $authors = Book::select('author')
+            ->distinct()
+            ->orderBy('author')
+            ->pluck('author');
+
+        return response()->json($authors);
     }
 
     public function show($id)

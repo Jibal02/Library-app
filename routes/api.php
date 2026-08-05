@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ReportController;
@@ -14,6 +15,8 @@ Route::prefix('v1')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:auth');
     Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:auth');
     Route::get('/books', [BookController::class, 'index']);
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::get('/authors', [BookController::class, 'authors']);
 
     // harus login dulu baru bisa akses route ini
     Route::middleware('auth:sanctum')->group(function () {
