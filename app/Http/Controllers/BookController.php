@@ -58,6 +58,20 @@ class BookController extends Controller
         return response()->json($book);
     }
 
+    // GET /api/v1/books/scan/{isbn} — admin & staff, cari buku by ISBN (scan barcode)
+    public function scanByIsbn($isbn)
+    {
+        $book = Book::with('category')->where('isbn', $isbn)->first();
+
+        if (!$book) {
+            return response()->json([
+                'message' => 'Buku dengan ISBN tersebut tidak ditemukan.',
+            ], 404);
+        }
+
+        return response()->json($book);
+    }
+
     // POST /api/v1/books — admin & staff
     public function store(Request $request)
     {

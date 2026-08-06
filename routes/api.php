@@ -38,6 +38,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/books', [BookController::class, 'store']);
         Route::put('/books/{id}', [BookController::class, 'update']);
         Route::delete('/books/{id}', [BookController::class, 'destroy']);
+        Route::get('/books/scan/{isbn}', [BookController::class, 'scanByIsbn']);
         Route::post('/loans/issue', [LoanController::class, 'issue']);
         Route::post('/loans/{id}/return', [LoanController::class, 'return']);
         Route::get('/members', [MemberController::class, 'index']);
