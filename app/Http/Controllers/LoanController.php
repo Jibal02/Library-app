@@ -12,6 +12,53 @@ use Illuminate\Support\Facades\DB;
 
 class LoanController extends Controller
 {
+    // GET /api/v1/loans — admin & staff, daftar loan dengan filter (book_id/status/member_id)
+    public function index(Request $request)
+    {
+        $loans = Loan::with(['member', 'book'])
+            ->when($request->book_id, function ($query) use ($request) {
+                $query->where('book_id', $request->book_id);
+            })
+            ->when($request->status, function ($query) use ($request) {
+                $query->where('status', $request->status);
+            })
+            ->when($request->member_id, function ($query) use ($request) {
+                $query->where('member_id', $request->member_id);
+            })
+            ->orderByDesc('borrowed_at')
+            ->paginate(12);
+
+        return response()->json($loans);
+    }
+
+    // GET /api/v1/transactions?date=YYYY-MM-DD — admin & staff, peminjaman + pengembalian di tanggal itu
+    public function transactions(Request $request)
+    {
+        $request->validate([
+            'date' => 'required|date',
+        ]);
+
+        $date = $request->date;
+
+        $issued = Loan::with(['member', 'book'])
+            ->where('borrowed_at', $date)
+            ->where('status', 'active')
+            ->orderByDesc('borrowed_at')
+            ->get();
+
+        $returned = Loan::with(['member', 'book'])
+            ->where('returned_at', $date)
+            ->where('status', 'returned')
+            ->orderByDesc('returned_at')
+            ->get();
+
+        return response()->json([
+            'date' => $date,
+            'issued' => $issued,
+            'returned' => $returned,
+        ]);
+    }
+
     // POST /api/v1/loans/issue — admin & staff
     public function issue(Request $request)
     {
@@ -65,8 +112,8 @@ class LoanController extends Controller
     {
         $loan = Loan::findOrFail($id);
 
-        if ($loan->returned_at) {
-            return response()->json(['message' => 'Loan ini sudah dikembalikan.'], 422);
+        if ($loan->returned_at || $loan->status === 'returned') {
+            return response()->json(['message' => 'Buku ini sudah dikembalikan sebelumnya.'], 422);
         }
 
         $loan = DB::transaction(function () use ($loan) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\BookController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 
 Route::prefix('v1')->group(function () {
@@ -31,6 +32,10 @@ Route::prefix('v1')->group(function () {
             ]);
         });
 
+        Route::get('/profile', [ProfileController::class, 'show']);
+        Route::get('/profile/loans', [ProfileController::class, 'loans']);
+        Route::get('/profile/history', [ProfileController::class, 'history']);
+
         Route::get('/books/{id}', [BookController::class, 'show']);
 
         // khusus admin & staff
@@ -41,6 +46,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/books/scan/{isbn}', [BookController::class, 'scanByIsbn']);
         Route::post('/loans/issue', [LoanController::class, 'issue']);
         Route::post('/loans/{id}/return', [LoanController::class, 'return']);
+        Route::get('/loans', [LoanController::class, 'index']);
+        Route::get('/transactions', [LoanController::class, 'transactions']);
         Route::get('/members', [MemberController::class, 'index']);
         Route::patch('/members/{id}', [MemberController::class, 'update']);
         Route::patch('/members/{id}/status', [MemberController::class, 'updateStatus']);
