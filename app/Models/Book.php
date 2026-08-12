@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Book extends Model
 {
@@ -30,7 +30,7 @@ class Book extends Model
             'available_copies' => 'integer',
         ];
     }
-    
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
@@ -39,5 +39,10 @@ class Book extends Model
     public function loans(): HasMany
     {
         return $this->hasMany(Loan::class);
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(BookReservation::class);
     }
 }

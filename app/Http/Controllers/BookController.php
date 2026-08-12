@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\BookReservation;
 use App\Models\Loan;
 use Illuminate\Http\Request;
 
@@ -135,6 +136,16 @@ class BookController extends Controller
         if ($hasActiveLoan) {
             return response()->json([
                 'message' => 'Buku masih dipinjam, tidak bisa dihapus.',
+            ], 422);
+        }
+
+        $hasActiveReservation = BookReservation::where('book_id', $book->id)
+            ->whereIn('status', ['pending', 'ready'])
+            ->exists();
+
+        if ($hasActiveReservation) {
+            return response()->json([
+                'message' => 'Buku masih ada yang menahan (reserve), tidak bisa dihapus.',
             ], 422);
         }
 

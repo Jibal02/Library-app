@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Book;
+use App\Models\BookReservation;
 use App\Models\Loan;
 use App\Models\Member;
 use App\Services\FineCalculator;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class LoanController extends Controller
 {
@@ -27,6 +29,12 @@ class LoanController extends Controller
             })
             ->orderByDesc('borrowed_at')
             ->paginate(12);
+
+        $loans->getCollection()->transform(function ($loan) {
+            $loan->estimated_fine = (new FineCalculator)->estimate($loan);
+
+            return $loan;
+        });
 
         return response()->json($loans);
     }
@@ -88,10 +96,17 @@ class LoanController extends Controller
         }
 
         $loan = DB::transaction(function () use ($member, $book) {
+            // lock row buku biar 2 request bareng gak oversell stok
+            $book = Book::whereKey($book->id)->lockForUpdate()->firstOrFail();
+
+            if ($book->available_copies <= 0) {
+                throw new HttpException(422, 'Buku sedang habis / tidak tersedia.');
+            }
+
             // stok berkurang
             $book->decrement('available_copies');
 
-            return Loan::create([
+            $loan = Loan::create([
                 'member_id' => $member->id,
                 'book_id' => $book->id,
                 'borrowed_at' => Carbon::today(),
@@ -99,6 +114,20 @@ class LoanController extends Controller
                 'fine_amount' => 0,
                 'status' => 'active',
             ]);
+
+            // hold pending/ready milik member utk buku ini terpenuhi
+            $reservation = BookReservation::where('member_id', $member->id)
+                ->where('book_id', $book->id)
+                ->whereIn('status', ['pending', 'ready'])
+                ->orderBy('reserved_at')
+                ->orderBy('id')
+                ->first();
+
+            if ($reservation) {
+                $reservation->update(['status' => 'fulfilled']);
+            }
+
+            return $loan;
         });
 
         return response()->json([
@@ -121,9 +150,20 @@ class LoanController extends Controller
             $loan->book->increment('available_copies');
 
             $loan->returned_at = Carbon::today();
-            $loan->fine_amount = (new FineCalculator())->calculate($loan);
+            $loan->fine_amount = (new FineCalculator)->calculate($loan);
             $loan->status = 'returned';
             $loan->save();
+
+            // hold pending pertama (FIFO) utk buku ini jadi 'ready' = siap diambil staff
+            $reservation = BookReservation::where('book_id', $loan->book_id)
+                ->where('status', 'pending')
+                ->orderBy('reserved_at')
+                ->orderBy('id')
+                ->first();
+
+            if ($reservation) {
+                $reservation->update(['status' => 'ready']);
+            }
 
             return $loan;
         });

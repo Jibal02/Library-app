@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BookReservation;
 use App\Models\Loan;
 use App\Models\Member;
 use App\Models\User;
@@ -109,6 +110,16 @@ class MemberController extends Controller
             if ($hasActiveLoan) {
                 return response()->json([
                     'message' => 'Member masih punya pinjaman aktif, tidak bisa dihapus.',
+                ], 422);
+            }
+
+            $hasActiveReservation = BookReservation::where('member_id', $user->member->id)
+                ->whereIn('status', ['pending', 'ready'])
+                ->exists();
+
+            if ($hasActiveReservation) {
+                return response()->json([
+                    'message' => 'Member masih punya hold/reservasi aktif, tidak bisa dihapus.',
                 ], 422);
             }
         }

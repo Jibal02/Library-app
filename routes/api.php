@@ -9,6 +9,7 @@ use App\Http\Controllers\LoanController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\ReservationController;
 
 Route::prefix('v1')->group(function () {
 
@@ -35,6 +36,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/profile', [ProfileController::class, 'show']);
         Route::get('/profile/loans', [ProfileController::class, 'loans']);
         Route::get('/profile/history', [ProfileController::class, 'history']);
+
+        Route::get('/reservations', [ReservationController::class, 'index']);
+        Route::post('/reservations', [ReservationController::class, 'store']);
+        Route::delete('/reservations/{id}', [ReservationController::class, 'destroy']);
 
         Route::get('/books/{id}', [BookController::class, 'show']);
 

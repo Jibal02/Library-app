@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Loan;
+use App\Services\FineCalculator;
 use Illuminate\Http\Request;
 
 class ProfileController extends Controller
@@ -12,7 +13,7 @@ class ProfileController extends Controller
     {
         $user = $request->user()->load('member');
 
-        if (!$user->member) {
+        if (! $user->member) {
             return response()->json([
                 'id' => $user->id,
                 'name' => $user->name,
@@ -28,7 +29,12 @@ class ProfileController extends Controller
         $loans = Loan::where('member_id', $user->member->id)
             ->with('book')
             ->orderByDesc('borrowed_at')
-            ->get();
+            ->get()
+            ->map(function ($loan) {
+                $loan->estimated_fine = (new FineCalculator)->estimate($loan);
+
+                return $loan;
+            });
 
         return response()->json([
             'id' => $user->id,
@@ -49,7 +55,7 @@ class ProfileController extends Controller
     {
         $member = $request->user()->member;
 
-        if (!$member) {
+        if (! $member) {
             return response()->json([
                 'loans' => [],
                 'active_loans' => 0,
@@ -60,7 +66,12 @@ class ProfileController extends Controller
             ->whereNull('returned_at')
             ->with('book')
             ->orderByDesc('borrowed_at')
-            ->get();
+            ->get()
+            ->map(function ($loan) {
+                $loan->estimated_fine = (new FineCalculator)->estimate($loan);
+
+                return $loan;
+            });
 
         return response()->json([
             'loans' => $loans,
@@ -73,7 +84,7 @@ class ProfileController extends Controller
     {
         $member = $request->user()->member;
 
-        if (!$member) {
+        if (! $member) {
             return response()->json([
                 'loans' => [],
                 'total_loans' => 0,
@@ -83,7 +94,12 @@ class ProfileController extends Controller
         $loans = Loan::where('member_id', $member->id)
             ->with('book')
             ->orderByDesc('borrowed_at')
-            ->get();
+            ->get()
+            ->map(function ($loan) {
+                $loan->estimated_fine = (new FineCalculator)->estimate($loan);
+
+                return $loan;
+            });
 
         return response()->json([
             'loans' => $loans,
