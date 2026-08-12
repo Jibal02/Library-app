@@ -33,5 +33,7 @@ class DatabaseSeeder extends Seeder
             'member_id' => fn () => $members->random()->id,
             'book_id' => fn () => $books->random()->id,
         ]);
+
+        Book::resyncStock();
     }
 }

@@ -25,7 +25,7 @@ class BookFactory extends Factory
             'publisher' => fake()->company(),
             'publication_year' => fake()->numberBetween(1980, (int) date('Y')),
             'total_copies' => $total,
-            'available_copies' => fake()->numberBetween(0, $total),
+            'available_copies' => $total,
         ];
     }
 }

@@ -79,8 +79,37 @@ class DemoMemberSeeder extends Seeder
             'status' => 'active',
         ]);
 
+        $this->createReturnDemoLoans($member->id);
+
+        Book::resyncStock();
+
         $this->command->info('Demo member siap — login: '.$email.' / password');
         $this->command->info('user_id: '.$user->id.' | member_id (kartu): '.$member->id);
+    }
+
+    private function createReturnDemoLoans(int $memberId): void
+    {
+        $target = Book::find(15) ?? Book::where('total_copies', '>=', 2)->first();
+
+        if (! $target) {
+            $this->command->warn('Tidak ada buku untuk loan demo return, lewati.');
+
+            return;
+        }
+
+        for ($i = 1; $i <= 2; $i++) {
+            Loan::create([
+                'member_id' => $memberId,
+                'book_id' => $target->id,
+                'borrowed_at' => Carbon::today()->subDays(20),
+                'due_date' => Carbon::today()->subDays(6),
+                'returned_at' => null,
+                'fine_amount' => 0,
+                'status' => 'active',
+            ]);
+        }
+
+        $this->command->info('2 loan aktif (due_date lewat) dibuat utk buku id '.$target->id.' — siap diuji return.');
     }
 
     private function generateMemberCode(): string

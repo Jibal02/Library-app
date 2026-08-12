@@ -45,4 +45,24 @@ class Book extends Model
     {
         return $this->hasMany(BookReservation::class);
     }
+
+    public static function resyncStock(): int
+    {
+        $fixed = 0;
+
+        foreach (static::all() as $book) {
+            $borrowed = $book->loans()
+                ->whereNull('returned_at')
+                ->count();
+
+            $correct = max(0, $book->total_copies - $borrowed);
+
+            if ($book->available_copies !== $correct) {
+                $book->update(['available_copies' => $correct]);
+                $fixed++;
+            }
+        }
+
+        return $fixed;
+    }
 }
