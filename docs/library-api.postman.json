@@ -1,0 +1,367 @@
+{
+  "info": {
+    "name": "Library Management App - API v1",
+    "description": "Dokumentasi API backend Library Management (Laravel + Sanctum).\n\nSetup:\n1. Login via `POST /login`, salin `access_token`.\n2. Set variable collection `token` (di tab Authorization/Cookies atau edit variables).\n3. Semua request authenticated otomatis pakai header Authorization: Bearer {{token}}.\n\nBase URL default: http://localhost/api/v1 — ubah variable `baseUrl` kalau pakai tunnel Cloudflare.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost/api/v1" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi\",\n  \"email\": \"budi@mail.com\",\n  \"password\": \"rahasia123\",\n  \"phone\": \"08123456789\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"] }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.access_token) {",
+                  "  pm.collectionVariables.set('token', json.access_token);",
+                  "}",
+                  ""
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"budi@mail.com\",\n  \"password\": \"rahasia123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "User (profile singkat)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/user", "host": ["{{baseUrl}}"], "path": ["user"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Katalog (Public)",
+      "item": [
+        {
+          "name": "Daftar Buku + Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/books?search=&author=&category_id=&page=1",
+              "host": ["{{baseUrl}}"],
+              "path": ["books"],
+              "query": [
+                { "key": "search", "value": "", "description": "cari title/author/isbn (alias q)" },
+                { "key": "author", "value": "" },
+                { "key": "category_id", "value": "" },
+                { "key": "page", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Detail Buku",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/books/1", "host": ["{{baseUrl}}"], "path": ["books", "1"] }
+          }
+        },
+        {
+          "name": "Kategori",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/categories", "host": ["{{baseUrl}}"], "path": ["categories"] } }
+        },
+        {
+          "name": "Penulis",
+          "request": { "method": "GET", "header": [], "url": { "raw": "{{baseUrl}}/authors", "host": ["{{baseUrl}}"], "path": ["authors"] } }
+        }
+      ]
+    },
+    {
+      "name": "3. Profil",
+      "item": [
+        {
+          "name": "Profil Saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/profile", "host": ["{{baseUrl}}"], "path": ["profile"] }
+          }
+        },
+        {
+          "name": "Pinjaman Aktif Saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/profile/loans", "host": ["{{baseUrl}}"], "path": ["profile", "loans"] }
+          }
+        },
+        {
+          "name": "Riwayat Pinjaman Saya",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/profile/history", "host": ["{{baseUrl}}"], "path": ["profile", "history"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Reservasi / Hold",
+      "item": [
+        {
+          "name": "Buat Reservasi",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"book_id\": 12\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "Buat Reservasi atas nama member (admin/staff)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"book_id\": 12,\n  \"member_id\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/reservations", "host": ["{{baseUrl}}"], "path": ["reservations"] }
+          }
+        },
+        {
+          "name": "Daftar Reservasi",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/reservations?status=&book_id=&member_id=",
+              "host": ["{{baseUrl}}"],
+              "path": ["reservations"],
+              "query": [
+                { "key": "status", "value": "", "description": "pending|ready|fulfilled|cancelled" },
+                { "key": "book_id", "value": "" },
+                { "key": "member_id", "value": "", "description": "id kartu member (members.id), khusus admin/staff" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Batal Reservasi",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reservations/1", "host": ["{{baseUrl}}"], "path": ["reservations", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Sirkulasi (Admin/Staff)",
+      "item": [
+        {
+          "name": "Terbitkan Pinjaman (issue)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": 3,\n  \"book_id\": 12\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/loans/issue", "host": ["{{baseUrl}}"], "path": ["loans", "issue"] }
+          }
+        },
+        {
+          "name": "Pengembalian (return)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/loans/1/return", "host": ["{{baseUrl}}"], "path": ["loans", "1", "return"] }
+          }
+        },
+        {
+          "name": "Daftar Loan",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/loans?book_id=&status=&member_id=",
+              "host": ["{{baseUrl}}"],
+              "path": ["loans"],
+              "query": [
+                { "key": "book_id", "value": "" },
+                { "key": "status", "value": "", "description": "active|returned|overdue" },
+                { "key": "member_id", "value": "", "description": "id kartu member (members.id)" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Transaksi Harian",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/transactions?date=2026-08-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["transactions"],
+              "query": [{ "key": "date", "value": "2026-08-10", "description": "format YYYY-MM-DD (wajib)" }]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Member (Admin/Staff)",
+      "item": [
+        {
+          "name": "Daftar Member",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": {
+              "raw": "{{baseUrl}}/members?q=",
+              "host": ["{{baseUrl}}"],
+              "path": ["members"],
+              "query": [{ "key": "q", "value": "" }]
+            }
+          }
+        },
+        {
+          "name": "Edit Member",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Budi\",\n  \"email\": \"budi@mail.com\",\n  \"phone\": \"08123456789\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/members/5", "host": ["{{baseUrl}}"], "path": ["members", "5"] }
+          }
+        },
+        {
+          "name": "Ubah Status Member",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"suspended\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/members/5/status", "host": ["{{baseUrl}}"], "path": ["members", "5", "status"] }
+          }
+        },
+        {
+          "name": "Riwayat Member",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/members/3/history", "host": ["{{baseUrl}}"], "path": ["members", "3", "history"] }
+          }
+        },
+        {
+          "name": "Hapus Member",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/members/5", "host": ["{{baseUrl}}"], "path": ["members", "5"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Buku (Admin/Staff)",
+      "item": [
+        {
+          "name": "Tambah Buku",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"isbn\": \"9786020311001\",\n  \"title\": \"Laravel in Action\",\n  \"author\": \"John Doe\",\n  \"publisher\": \"Publisher X\",\n  \"publication_year\": 2024,\n  \"total_copies\": 3\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/books", "host": ["{{baseUrl}}"], "path": ["books"] }
+          }
+        },
+        {
+          "name": "Edit Buku",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"isbn\": \"9786020311001\",\n  \"title\": \"Laravel in Action (Edisi 2)\",\n  \"author\": \"John Doe\",\n  \"publisher\": \"Publisher X\",\n  \"publication_year\": 2025,\n  \"total_copies\": 5\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": { "raw": "{{baseUrl}}/books/12", "host": ["{{baseUrl}}"], "path": ["books", "12"] }
+          }
+        },
+        {
+          "name": "Scan ISBN",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/books/scan/9786020311001", "host": ["{{baseUrl}}"], "path": ["books", "scan", "9786020311001"] }
+          }
+        },
+        {
+          "name": "Hapus Buku",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/books/12", "host": ["{{baseUrl}}"], "path": ["books", "12"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Laporan (Admin/Staff)",
+      "item": [
+        {
+          "name": "Buku Terlambat (Overdue)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": { "raw": "{{baseUrl}}/reports/overdue", "host": ["{{baseUrl}}"], "path": ["reports", "overdue"] }
+          }
+        }
+      ]
+    }
+  ]
+}
