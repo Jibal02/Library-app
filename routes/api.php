@@ -59,6 +59,7 @@ Route::prefix('v1')->group(function () {
         Route::delete('/members/{id}', [MemberController::class, 'destroy']);
             Route::get('/members/{id}/history', [MemberController::class, 'history']);
             Route::get('/reports/overdue', [ReportController::class, 'overdue']);
+            Route::get('/reports/member-penalty', [ReportController::class, 'memberPenaltySummary']);
         });
 
     });
